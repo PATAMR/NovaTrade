@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovaTrade Pro v12.2 - Production</title>
+    <title>NovaTrade Pro v12.3 - Multi-Actifs</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
-        /* --- 1. THEME & VARIABLES --- */
+        /* --- 1. CSS VARIABLES --- */
         :root {
-            /* Palette Dark (Défaut) */
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
             --bg-tertiary: #334155;
@@ -20,18 +19,13 @@
             --text-secondary: #94a3b8;
             --accent-color: #3b82f6;
             --border-color: #334155;
-            
-            /* Couleurs Sémantiques (Dark) */
-            --color-up: #10b981;
-            --color-down: #ef4444;
-            
-            /* UI */
-            --card-radius: 12px;
-            --modal-overlay: rgba(0, 0, 0, 0.75);
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --modal-overlay: rgba(0, 0, 0, 0.8);
+            --tab-radius: 8px 8px 0 0;
         }
 
         [data-theme="light"] {
-            /* Palette Light */
             --bg-primary: #f8fafc;
             --bg-secondary: #ffffff;
             --bg-tertiary: #e2e8f0;
@@ -41,366 +35,349 @@
             --modal-overlay: rgba(0, 0, 0, 0.4);
         }
 
-        /* --- 2. BASE & RESET --- */
+        /* --- 2. BASE --- */
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-primary);
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-primary);
             color: var(--text-primary);
             height: 100vh;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             overflow: hidden;
-            transition: background 0.3s, color 0.3s;
         }
 
-        /* --- 3. COMPONENTS --- */
+        /* --- 3. UTILITIES --- */
         .flex { display: flex; }
-        .flex-col { flex-direction: column; }
         .justify-between { justify-content: space-between; }
         .align-center { align-items: center; }
         .gap-2 { gap: 0.5rem; }
+        .hidden { display: none !important; }
+        .text-green { color: var(--success-color); }
+        .text-red { color: var(--danger-color); }
+        .font-bold { font-weight: 700; }
         
         .btn {
-            padding: 8px 14px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            font-weight: 600;
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            transition: all 0.2s;
-            font-size: 0.9rem;
+            padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer;
+            font-weight: 600; background: var(--bg-tertiary); color: var(--text-primary);
+            transition: 0.2s;
         }
-        .btn:hover:not(:disabled) { filter: brightness(1.15); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
+        .btn:hover { filter: brightness(1.1); }
         .btn-primary { background: var(--accent-color); color: white; }
-        .btn-success { background: var(--color-up); color: white; }
-        .btn-danger { background: var(--color-down); color: white; }
         .btn-icon { width: 36px; height: 36px; display: grid; place-items: center; padding: 0; }
-
-        /* Timeframe Buttons */
-        .timeframe-group { display: flex; gap: 4px; background: var(--bg-primary); padding: 4px; border-radius: 6px; }
-        .btn-time { 
-            background: transparent; 
-            font-size: 0.75rem; 
-            padding: 4px 10px; 
-            border-radius: 4px;
-            color: var(--text-secondary);
-        }
-        .btn-time:hover { color: var(--text-primary); background: var(--bg-tertiary); }
-        .btn-time.active { background: var(--accent-color); color: white; }
-
-        /* Spinner Animation */
-        .loader-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.5);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 10;
-            backdrop-filter: blur(2px);
-        }
-        .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid var(--bg-tertiary);
-            border-top: 4px solid var(--accent-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- 4. LAYOUT --- */
         header {
-            height: 60px;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 20px;
-            display: flex; align-items: center; justify-content: space-between;
+            height: 60px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);
+            padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
         }
-        .logo { font-weight: 800; color: var(--accent-color); font-size: 1.25rem; letter-spacing: -0.5px; }
 
         .main-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr 320px;
+            display: grid; grid-template-columns: 320px 1fr 300px;
             height: calc(100vh - 60px);
-            background: var(--border-color);
-            gap: 1px;
         }
-        
-        .panel { background: var(--bg-primary); overflow-y: auto; display: flex; flex-direction: column; position: relative; }
 
-        /* Watchlist */
-        .search-container { padding: 15px; border-bottom: 1px solid var(--border-color); }
+        .panel {
+            background: var(--bg-primary); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* --- 5. TABS & LIST --- */
+        .tabs-header {
+            display: flex; background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color); padding-top: 5px;
+        }
+        .tab-btn {
+            flex: 1; padding: 12px; background: transparent; border: none;
+            color: var(--text-secondary); cursor: pointer; font-weight: 600;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active {
+            color: var(--accent-color); border-bottom-color: var(--accent-color);
+            background: var(--bg-primary);
+        }
+
+        .filters-bar {
+            padding: 10px; border-bottom: 1px solid var(--border-color);
+            display: flex; gap: 5px;
+        }
         .search-input {
-            width: 100%; padding: 10px; border-radius: 6px;
+            width: 100%; padding: 8px; border-radius: 4px;
             background: var(--bg-secondary); border: 1px solid var(--border-color);
             color: var(--text-primary);
         }
-        .market-item {
-            padding: 12px 15px; border-bottom: 1px solid var(--border-color);
-            cursor: pointer; transition: background 0.1s;
-        }
-        .market-item:hover { background: var(--bg-secondary); }
-        .market-item.active { background: var(--bg-tertiary); border-left: 3px solid var(--accent-color); }
 
-        /* Chart Area */
+        .asset-list { overflow-y: auto; flex: 1; }
+        .asset-item {
+            padding: 12px 15px; border-bottom: 1px solid var(--border-color);
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        }
+        .asset-item:hover { background: var(--bg-secondary); }
+        .asset-item.active { background: var(--bg-tertiary); border-left: 3px solid var(--accent-color); }
+        
+        .asset-meta { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .asset-price { font-weight: 600; text-align: right; }
+
+        /* --- 6. CHART AREA --- */
+        .chart-panel { position: relative; display: flex; flex-direction: column; }
         .chart-header {
             padding: 15px; border-bottom: 1px solid var(--border-color);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .chart-container { flex: 1; padding: 10px; position: relative; min-height: 0; }
-        
-        .indicator-card {
-            position: absolute; top: 20px; left: 20px;
-            background: var(--bg-secondary);
+        .timeframe-btns { background: var(--bg-secondary); padding: 4px; border-radius: 6px; }
+        .chart-wrapper { flex: 1; position: relative; padding: 10px; }
+
+        /* --- 7. RIGHT PANEL --- */
+        .trade-panel { padding: 20px; overflow-y: auto; }
+        .wallet-card {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;
             border: 1px solid var(--border-color);
-            padding: 8px 12px; border-radius: 6px;
-            font-size: 0.8rem; pointer-events: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 5px; color: var(--text-secondary); }
+        .input-group input {
+            width: 100%; padding: 10px; background: var(--bg-secondary);
+            border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px;
         }
 
-        /* Right Panel (Trade & Portfolio) */
-        .portfolio-card {
-            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-            padding: 20px; border-bottom: 1px solid var(--border-color);
-            text-align: center;
+        /* --- 8. LOADERS & MODALS --- */
+        .loader {
+            border: 3px solid var(--bg-tertiary); border-top: 3px solid var(--accent-color);
+            border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
         }
-        .balance-title { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-        .balance-value { font-size: 2rem; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
-
-        .trade-section { padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-label { display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-secondary); }
-        .form-input {
-            width: 100%; padding: 10px; border-radius: 6px;
-            background: var(--bg-secondary); border: 1px solid var(--border-color);
-            color: var(--text-primary); font-family: monospace;
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #loadingOverlay {
+            position: absolute; inset: 0; background: rgba(15, 23, 42, 0.7);
+            display: flex; justify-content: center; align-items: center; z-index: 10;
         }
 
-        /* Modal Settings */
-        .modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--modal-overlay); z-index: 1000;
-            display: none; justify-content: center; align-items: center;
-        }
-        .modal-backdrop.open { display: flex; }
-        .modal-content {
-            background: var(--bg-secondary); width: 400px; padding: 25px;
-            border-radius: var(--card-radius); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
-        }
-
-        /* Utils */
-        .text-green { color: var(--color-up); }
-        .text-red { color: var(--color-down); }
-        .hidden { display: none; }
-
-        @media (max-width: 1024px) {
-            .main-grid { grid-template-columns: 1fr 300px; }
-            .panel:first-child { display: none; } /* Hide watchlist on tablet */
-        }
-        @media (max-width: 768px) {
-            .main-grid { grid-template-columns: 1fr; }
-            .panel:last-child { display: none; } /* Hide tools on mobile */
-        }
+        /* Responsive */
+        @media (max-width: 1024px) { .main-grid { grid-template-columns: 280px 1fr; } .trade-panel { display: none; } }
+        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } .chart-panel { display: none; } }
     </style>
 </head>
 <body>
 
-    <div id="settingsModal" class="modal-backdrop">
-        <div class="modal-content">
-            <div class="flex justify-between align-center" style="margin-bottom: 20px;">
-                <h2 style="font-size: 1.2rem;">Configuration</h2>
-                <button class="btn btn-icon" onclick="app.toggleSettings()"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Devise Principale</label>
-                <select id="settingCurrency" class="form-input">
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Mode d'affichage</label>
-                <div class="flex gap-2">
-                    <button class="btn" style="flex:1" onclick="app.setTheme('dark')">Sombre</button>
-                    <button class="btn" style="flex:1" onclick="app.setTheme('light')">Clair</button>
-                </div>
-            </div>
-            <button class="btn btn-primary" style="width:100%" onclick="app.saveSettings()">Sauvegarder</button>
-        </div>
-    </div>
-
     <header>
-        <div class="logo"><i class="fas fa-layer-group"></i> NOVATRADE PRO <span style="font-size:0.8rem; opacity:0.6">v12.2</span></div>
         <div class="flex align-center gap-2">
-            <button class="btn btn-icon" onclick="app.toggleTheme()" title="Basculer le thème"><i class="fas fa-moon"></i></button>
-            <button class="btn btn-icon" onclick="app.exportPDF()" title="Rapport PDF"><i class="fas fa-file-pdf"></i></button>
-            <button class="btn btn-icon" onclick="app.toggleSettings()"><i class="fas fa-cog"></i></button>
+            <i class="fas fa-layer-group text-accent" style="color:var(--accent-color)"></i>
+            <span class="font-bold" style="font-size:1.1rem">NOVATRADE PRO v12.3</span>
+        </div>
+        <div class="flex gap-2">
+            <button class="btn btn-icon" onclick="app.toggleTheme()"><i class="fas fa-adjust"></i></button>
+            <button class="btn btn-icon" onclick="app.exportPDF()"><i class="fas fa-file-pdf"></i></button>
         </div>
     </header>
 
     <div class="main-grid">
         
         <div class="panel">
-            <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="Rechercher actif (ex: BTC)...">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="app.switchTab('crypto')">CRYPTO</button>
+                <button class="tab-btn" onclick="app.switchTab('stocks')">ACTIONS</button>
+                <button class="tab-btn" onclick="app.switchTab('commodities')">MATIÈRES</button>
             </div>
-            <div id="watchlistContainer">
+
+            <div class="filters-bar flex-col gap-2">
+                <input type="text" id="searchInput" class="search-input" placeholder="Rechercher actif..." onkeyup="app.filterList()">
+                <div class="flex gap-2">
+                    <select id="sortSelect" class="search-input" onchange="app.sortList()" style="font-size:0.8rem">
+                        <option value="rank">Rang (Top)</option>
+                        <option value="gainers">Gainers (+%)</option>
+                        <option value="loosers">Losers (-%)</option>
+                        <option value="alpha">A-Z</option>
+                    </select>
                 </div>
+            </div>
+
+            <div id="assetList" class="asset-list">
+                </div>
+            <div id="listLoader" class="flex justify-between" style="padding:20px; justify-content:center"><div class="loader"></div></div>
         </div>
 
-        <div class="panel">
-            <div id="chartLoader" class="loader-overlay hidden">
-                <div class="spinner"></div>
-            </div>
-
+        <div class="panel chart-panel">
+            <div id="loadingOverlay" class="hidden"><div class="loader"></div></div>
+            
             <div class="chart-header">
                 <div>
-                    <span id="chartSymbol" style="font-weight:bold; margin-right:10px">BTC/USD</span>
-                    <span id="chartPrice" class="text-green">$0.00</span>
+                    <h2 id="chartTitle">BTC/USD</h2>
+                    <div class="flex align-center gap-2">
+                        <span id="chartPrice" class="font-bold" style="font-size:1.5rem">$64,000.00</span>
+                        <span id="chartChange" class="text-green">+1.5%</span>
+                    </div>
                 </div>
-                <div class="timeframe-group">
-                    <button class="btn-time active" onclick="app.changeTimeframe('1H')">1H</button>
-                    <button class="btn-time" onclick="app.changeTimeframe('4H')">4H</button>
-                    <button class="btn-time" onclick="app.changeTimeframe('1D')">1D</button>
-                    <button class="btn-time" onclick="app.changeTimeframe('1W')">1W</button>
-                    <button class="btn-time" onclick="app.changeTimeframe('1M')">1M</button>
+                <div class="timeframe-btns">
+                    <button class="btn" style="padding:4px 8px; font-size:0.75rem" onclick="app.setTimeframe('1H')">1H</button>
+                    <button class="btn" style="padding:4px 8px; font-size:0.75rem" onclick="app.setTimeframe('1D')">1D</button>
+                    <button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem" onclick="app.setTimeframe('1W')">1W</button>
                 </div>
             </div>
-            
-            <div class="chart-container">
-                <canvas id="tradingChart"></canvas>
-                <div class="indicator-card">
-                    <div style="margin-bottom:4px">RSI (14): <span id="rsiValue" style="font-weight:800">--</span></div>
-                    <div>SMA (20): <span id="smaValue">--</span></div>
-                </div>
+
+            <div class="chart-wrapper">
+                <canvas id="mainChart"></canvas>
             </div>
         </div>
 
-        <div class="panel">
-            <div class="portfolio-card">
-                <div class="balance-title">Solde Total</div>
-                <div id="totalBalance" class="balance-value">$0.00</div>
-                <div style="font-size:0.8rem; color:var(--text-secondary)">P&L Journalier: <span class="text-green">+1.25%</span></div>
+        <div class="panel trade-panel">
+            <div class="wallet-card">
+                <div style="font-size:0.8rem; opacity:0.8">PORTEFEUILLE TOTAL</div>
+                <h1 id="totalBalance">$50,000.00</h1>
+                <div class="text-green" style="font-size:0.8rem"><i class="fas fa-arrow-up"></i> +$1,240 (24h)</div>
             </div>
 
-            <div class="trade-section">
-                <h3 style="margin-bottom:15px; font-size:1rem;">Placer un ordre</h3>
-                
-                <div class="form-group">
-                    <label class="form-label">Prix Entrée</label>
-                    <input type="text" id="inputPrice" class="form-input" disabled value="Au marché">
+            <div style="margin-top:20px">
+                <h3 style="margin-bottom:15px">Placer un ordre</h3>
+                <div class="input-group">
+                    <label>Action</label>
+                    <div class="flex gap-2">
+                        <button class="btn btn-success" style="flex:1">ACHAT</button>
+                        <button class="btn btn-danger" style="flex:1">VENTE</button>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Montant (USD)</label>
-                    <input type="number" id="inputAmount" class="form-input" value="1000">
+                <div class="input-group">
+                    <label>Montant (USD)</label>
+                    <input type="number" id="tradeAmount" value="1000">
                 </div>
-
-                <div class="flex gap-2" style="margin-top:20px">
-                    <button class="btn btn-success" style="flex:1" onclick="app.placeOrder('buy')">ACHETER</button>
-                    <button class="btn btn-danger" style="flex:1" onclick="app.placeOrder('sell')">VENDRE</button>
+                <div class="input-group">
+                    <label>Effet de levier</label>
+                    <input type="range" min="1" max="10" value="1" style="width:100%">
+                    <div style="text-align:right; font-size:0.8rem">x1</div>
                 </div>
-            </div>
-
-            <div class="trade-section" style="border-top:1px solid var(--border-color)">
-                <h3 style="margin-bottom:15px; font-size:1rem;">Alertes Prix</h3>
-                <div class="flex gap-2">
-                    <input type="number" id="alertPriceInput" class="form-input" placeholder="Cible...">
-                    <button class="btn btn-primary" onclick="app.setAlert()"><i class="fas fa-bell"></i></button>
-                </div>
+                <button class="btn btn-primary" style="width:100%" onclick="app.executeTrade()">VALIDER L'ORDRE</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        
-        /** * SERVICE CENTRAL (STATE MANAGEMENT)
-         * Gère les données et la persistance localStorage
+        /**
+         * 1. SERVICES DE DONNÉES (Pattern Factory)
+         * Gère la récupération hétérogène (API vs Mock)
          */
-        class Store {
+        class DataService {
             constructor() {
-                this.state = {
-                    theme: localStorage.getItem('nt_theme') || 'dark',
-                    balance: parseFloat(localStorage.getItem('nt_balance')) || 50000,
-                    activeAsset: 'bitcoin',
-                    timeframe: '1H',
-                    watchlist: [],
-                    chartHistory: []
-                };
+                this.cache = {};
+                this.cacheTTL = 60 * 1000; // 1 minute
+            }
+
+            async getAssets(category) {
+                const cacheKey = `data_${category}`;
+                const cached = localStorage.getItem(cacheKey);
                 
-                // Init Theme
-                document.documentElement.setAttribute('data-theme', this.state.theme);
+                if (cached) {
+                    const { timestamp, data } = JSON.parse(cached);
+                    if (Date.now() - timestamp < this.cacheTTL) {
+                        return data;
+                    }
+                }
+
+                let data = [];
+                try {
+                    if (category === 'crypto') {
+                        data = await this.fetchCryptos();
+                    } else if (category === 'stocks') {
+                        data = await this.generateStocks();
+                    } else if (category === 'commodities') {
+                        data = await this.generateCommodities();
+                    }
+                } catch (e) {
+                    console.error("Fetch Error, using fallback", e);
+                    // Fallback si l'API échoue
+                    data = category === 'crypto' ? this.getMockCrypto() : [];
+                }
+
+                // Save to cache
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    timestamp: Date.now(),
+                    data: data
+                }));
+                return data;
             }
 
-            save() {
-                localStorage.setItem('nt_theme', this.state.theme);
-                localStorage.setItem('nt_balance', this.state.balance.toString());
+            async fetchCryptos() {
+                const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false');
+                if (!res.ok) throw new Error('API Rate Limit');
+                const raw = await res.json();
+                return raw.map(c => ({
+                    id: c.id,
+                    symbol: c.symbol.toUpperCase(),
+                    name: c.name,
+                    price: c.current_price,
+                    change: c.price_change_percentage_24h,
+                    cap: c.market_cap,
+                    type: 'crypto'
+                }));
             }
 
-            updateBalance(amount, type) {
-                if(type === 'buy') this.state.balance -= amount;
-                else this.state.balance += amount;
-                this.save();
-                return this.state.balance;
+            // Moteur de Simulation pour Stocks (car pas d'API free stable CORS)
+            async generateStocks() {
+                await new Promise(r => setTimeout(r, 600)); // Simuler délai réseau
+                const stocks = [
+                    {s:'AAPL', n:'Apple Inc.', p:220}, {s:'MSFT', n:'Microsoft', p:415},
+                    {s:'NVDA', n:'Nvidia', p:880}, {s:'GOOGL', n:'Alphabet', p:175},
+                    {s:'AMZN', n:'Amazon', p:180}, {s:'META', n:'Meta Platforms', p:490},
+                    {s:'TSLA', n:'Tesla', p:170}, {s:'LVMH', n:'LVMH', p:850},
+                    {s:'JPM', n:'JPMorgan Chase', p:195}, {s:'V', n:'Visa', p:280},
+                    {s:'WMT', n:'Walmart', p:60}, {s:'XOM', n:'Exxon Mobil', p:118},
+                    {s:'MA', n:'Mastercard', p:455}, {s:'PG', n:'Procter & Gamble', p:168},
+                    {s:'OR.PA', n:'L\'Oréal', p:445}, {s:'SAP', n:'SAP SE', p:178},
+                    {s:'ASML', n:'ASML Holding', p:980}, {s:'SIE.DE', n:'Siemens', p:175},
+                    {s:'AIR.PA', n:'Airbus', p:165}, {s:'MC.PA', n:'LVMH', p:860}
+                ];
+                
+                return stocks.map((s, i) => ({
+                    id: s.s,
+                    symbol: s.s,
+                    name: s.n,
+                    price: s.p * (1 + (Math.random() * 0.04 - 0.02)), // Variation aléatoire réaliste
+                    change: (Math.random() * 5 - 2.5), // -2.5% à +2.5%
+                    cap: 1000000000 * (20 - i), // Fake Market Cap descendant
+                    type: 'stock'
+                }));
+            }
+
+            async generateCommodities() {
+                await new Promise(r => setTimeout(r, 600));
+                const commodities = [
+                    {s:'XAU', n:'Gold / Or', p:2650}, {s:'XAG', n:'Silver / Argent', p:31.50},
+                    {s:'WTI', n:'Crude Oil WTI', p:78.50}, {s:'BRENT', n:'Brent Oil', p:82.20},
+                    {s:'NG', n:'Natural Gas', p:2.80}, {s:'HG', n:'Copper / Cuivre', p:4.45},
+                    {s:'PT', n:'Platinum', p:980}, {s:'PA', n:'Palladium', p:1050},
+                    {s:'ZW', n:'Wheat / Blé', p:560}, {s:'ZC', n:'Corn / Maïs', p:440},
+                    {s:'KC', n:'Coffee / Café', p:225}, {s:'ZS', n:'Soybeans', p:1180}
+                ];
+
+                return commodities.map(c => ({
+                    id: c.s,
+                    symbol: c.s,
+                    name: c.n,
+                    price: c.p * (1 + (Math.random() * 0.02 - 0.01)),
+                    change: (Math.random() * 4 - 2),
+                    cap: 0,
+                    type: 'commodity'
+                }));
+            }
+
+            getMockCrypto() {
+                return [
+                    {id:'bitcoin', symbol:'BTC', name:'Bitcoin', price:64000, change:1.2},
+                    {id:'ethereum', symbol:'ETH', name:'Ethereum', price:3400, change:-0.5}
+                ];
             }
         }
-        const store = new Store();
 
         /**
-         * WEB WORKER INLINE
-         * Calculs mathématiques (RSI, SMA) hors du thread principal
+         * 2. UI MANAGER
          */
-        const workerScript = `
-            self.onmessage = function(e) {
-                const prices = e.data;
-                if(!prices || prices.length < 20) return;
-
-                // RSI Calc
-                let gains = 0, losses = 0;
-                for(let i=prices.length-14; i<prices.length; i++) {
-                    const diff = prices[i] - prices[i-1];
-                    if(diff >= 0) gains += diff; else losses -= diff;
-                }
-                const rs = gains / (losses || 1);
-                const rsi = 100 - (100 / (1 + rs));
-
-                // SMA Calc
-                const sum = prices.slice(-20).reduce((a,b) => a+b, 0);
-                const sma = sum / 20;
-
-                self.postMessage({ rsi, sma });
-            }
-        `;
-        const blob = new Blob([workerScript], {type: 'application/javascript'});
-        const worker = new Worker(URL.createObjectURL(blob));
-
-        /**
-         * UI MANAGER
-         * Gère le DOM, Chart.js et les intéractions
-         */
-        const ui = {
-            chart: null,
-
-            init() {
+        class UIManager {
+            constructor() {
+                this.chart = null;
                 this.initChart();
-                this.updateBalanceDisplay();
-                
-                // Recherche
-                document.getElementById('searchInput').addEventListener('input', (e) => {
-                    this.filterWatchlist(e.target.value);
-                });
-
-                // Worker Response
-                worker.onmessage = (e) => {
-                    this.updateIndicators(e.data);
-                };
-            },
+            }
 
             initChart() {
-                const ctx = document.getElementById('tradingChart').getContext('2d');
+                const ctx = document.getElementById('mainChart').getContext('2d');
                 Chart.defaults.font.family = 'Inter';
-                Chart.defaults.color = '#64748b';
                 
                 this.chart = new Chart(ctx, {
                     type: 'line',
@@ -411,254 +388,216 @@
                             data: [],
                             borderColor: '#3b82f6',
                             backgroundColor: (context) => {
-                                const ctx = context.chart.ctx;
-                                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                                gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
-                                gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
-                                return gradient;
+                                const bg = context.chart.ctx.createLinearGradient(0,0,0,300);
+                                bg.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+                                bg.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                                return bg;
                             },
                             borderWidth: 2,
                             fill: true,
                             tension: 0.3,
-                            pointRadius: 0,
-                            pointHoverRadius: 6,
-                            pointBackgroundColor: '#3b82f6'
+                            pointRadius: 0
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false, // TOOLTIP AMÉLIORÉ (CLAUDE)
-                        },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                titleColor: '#fff',
-                                bodyColor: '#ccc',
-                                borderColor: '#334155',
-                                borderWidth: 1,
-                                padding: 10,
-                                displayColors: false,
-                                callbacks: {
-                                    label: function(context) {
-                                        return `$ ${context.parsed.y.toFixed(2)}`;
-                                    }
-                                }
-                            }
-                        },
+                        interaction: { intersect: false, mode: 'index' },
+                        plugins: { legend: { display: false } },
                         scales: {
-                            x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } },
-                            y: { position: 'right', grid: { color: 'rgba(51, 65, 85, 0.2)' } }
+                            x: { display: false },
+                            y: { position: 'right', grid: { color: '#33415555' } }
                         }
                     }
                 });
-            },
-
-            // LOGIQUE COULEUR RSI AMÉLIORÉE (CLAUDE + GEMINI)
-            getRSIColor(value) {
-                const theme = store.state.theme;
-                const isDark = theme === 'dark';
-
-                if (value >= 70) return isDark ? '#ff6b6b' : '#e03131'; // Overbought (Red)
-                if (value <= 30) return isDark ? '#51cf66' : '#2f9e44'; // Oversold (Green)
-                return isDark ? '#ffd43b' : '#fab005'; // Neutral (Yellow)
-            },
-
-            updateIndicators(data) {
-                const rsiEl = document.getElementById('rsiValue');
-                rsiEl.innerText = data.rsi.toFixed(2);
-                rsiEl.style.color = this.getRSIColor(data.rsi);
-                
-                document.getElementById('smaValue').innerText = data.sma.toFixed(2);
-            },
-
-            updateBalanceDisplay() {
-                const el = document.getElementById('totalBalance');
-                el.innerText = '$' + store.state.balance.toLocaleString(undefined, {minimumFractionDigits: 2});
-            },
-
-            setLoading(isLoading) {
-                const loader = document.getElementById('chartLoader');
-                if(isLoading) loader.classList.remove('hidden');
-                else loader.classList.add('hidden');
-            },
-
-            filterWatchlist(query) {
-                const term = query.toLowerCase();
-                document.querySelectorAll('.market-item').forEach(item => {
-                    const txt = item.innerText.toLowerCase();
-                    item.style.display = txt.includes(term) ? 'flex' : 'none';
-                });
-            }
-        };
-
-        /**
-         * APP CONTROLLER
-         * Logique métier
-         */
-        class App {
-            constructor() {
-                ui.init();
-                this.loadData();
             }
 
-            // SIMULATION FETCH API (Avec Spinner et Délai)
-            async loadData() {
-                ui.setLoading(true); // SPINNER ON
-                
-                // Simulation délai réseau
-                await new Promise(r => setTimeout(r, 800));
-
-                const mockData = this.generateMockData();
-                this.renderWatchlist(mockData);
-                
-                // Charge le premier actif ou l'actif sauvegardé
-                const active = mockData.find(m => m.id === store.state.activeAsset) || mockData[0];
-                this.setActiveAsset(active);
-
-                ui.setLoading(false); // SPINNER OFF
-            }
-
-            generateMockData() {
-                // Génère des données légèrement différentes selon le timeframe
-                const volatility = store.state.timeframe === '1H' ? 0.005 : 0.05;
-                
-                return [
-                    { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', price: 64230, change: 1.2 },
-                    { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', price: 3450, change: -0.5 },
-                    { id: 'solana', symbol: 'SOL', name: 'Solana', price: 148, change: 5.4 },
-                    { id: 'bnb', symbol: 'BNB', name: 'Binance Coin', price: 590, change: 0.2 },
-                    { id: 'ripple', symbol: 'XRP', name: 'Ripple', price: 0.62, change: -1.1 }
-                ].map(c => ({
-                    ...c,
-                    price: c.price * (1 + (Math.random() - 0.5) * volatility)
-                }));
-            }
-
-            renderWatchlist(data) {
-                const container = document.getElementById('watchlistContainer');
+            renderList(assets, activeId) {
+                const container = document.getElementById('assetList');
                 container.innerHTML = '';
-                
-                data.forEach(coin => {
-                    const div = document.createElement('div');
-                    div.className = `market-item flex justify-between align-center ${coin.id === store.state.activeAsset ? 'active' : ''}`;
-                    div.innerHTML = `
+                document.getElementById('listLoader').classList.add('hidden');
+
+                if (assets.length === 0) {
+                    container.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8">Aucun résultat</div>';
+                    return;
+                }
+
+                assets.forEach(asset => {
+                    const el = document.createElement('div');
+                    el.className = `asset-item ${asset.id === activeId ? 'active' : ''}`;
+                    
+                    const priceFmt = asset.price > 10 ? 
+                        asset.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 
+                        asset.price.toLocaleString(undefined, {minimumFractionDigits: 4});
+
+                    el.innerHTML = `
                         <div>
-                            <div style="font-weight:bold">${coin.symbol}</div>
-                            <div style="font-size:0.75rem; color:var(--text-secondary)">${coin.name}</div>
+                            <div class="font-bold">${asset.symbol}</div>
+                            <div class="asset-meta">${asset.name}</div>
                         </div>
-                        <div style="text-align:right">
-                            <div>$${coin.price.toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
-                            <div class="${coin.change >= 0 ? 'text-green' : 'text-red'}" style="font-size:0.75rem">
-                                ${coin.change > 0 ? '+' : ''}${coin.change}%
+                        <div>
+                            <div class="asset-price">$${priceFmt}</div>
+                            <div class="${asset.change >= 0 ? 'text-green' : 'text-red'}" style="text-align:right; font-size:0.75rem">
+                                ${asset.change > 0 ? '+' : ''}${asset.change.toFixed(2)}%
                             </div>
                         </div>
                     `;
-                    div.onclick = () => {
-                        store.state.activeAsset = coin.id;
-                        this.loadData(); // Reload simulated data
-                    };
-                    container.appendChild(div);
+                    el.onclick = () => app.selectAsset(asset);
+                    container.appendChild(el);
                 });
             }
 
-            setActiveAsset(asset) {
-                document.getElementById('chartSymbol').innerText = `${asset.symbol}/USD`;
+            updateHeader(asset) {
+                document.getElementById('chartTitle').innerText = `${asset.symbol} / USD`;
                 document.getElementById('chartPrice').innerText = `$${asset.price.toLocaleString()}`;
-                document.getElementById('chartPrice').className = asset.change >= 0 ? 'text-green' : 'text-red';
-                
-                // Update Chart Data Simulation
-                const prices = [];
+                const changeEl = document.getElementById('chartChange');
+                changeEl.innerText = `${asset.change.toFixed(2)}%`;
+                changeEl.className = asset.change >= 0 ? 'text-green' : 'text-red';
+            }
+
+            updateChartData(price) {
+                // Simulation de données historiques basée sur le prix actuel
                 const labels = [];
-                let price = asset.price;
-                
-                // Generate 50 points based on timeframe
+                const data = [];
+                let p = price;
                 for(let i=0; i<50; i++) {
-                    price = price * (1 + (Math.random() - 0.5) * 0.01);
-                    prices.push(price);
-                    
-                    // Simple labels
-                    const d = new Date();
-                    d.setMinutes(d.getMinutes() - (50-i));
-                    labels.push(d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+                    labels.push(i);
+                    // Générer une courbe réaliste inversée
+                    data.unshift(p);
+                    p = p * (1 + (Math.random()*0.02 - 0.01));
+                }
+                
+                this.chart.data.labels = labels;
+                this.chart.data.datasets[0].data = data;
+                this.chart.update();
+            }
+        }
+
+        /**
+         * 3. MAIN CONTROLLER
+         */
+        class App {
+            constructor() {
+                this.service = new DataService();
+                this.ui = new UIManager();
+                
+                this.state = {
+                    tab: 'crypto', // crypto, stocks, commodities
+                    assets: [],
+                    filteredAssets: [],
+                    activeAsset: null,
+                    balance: 50000
+                };
+
+                // Init
+                this.switchTab('crypto');
+            }
+
+            async switchTab(tab) {
+                // UI Tabs
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active'); // Warning: depends on click event
+                
+                // Show Loader
+                document.getElementById('assetList').innerHTML = '';
+                document.getElementById('listLoader').classList.remove('hidden');
+
+                this.state.tab = tab;
+                
+                // Fetch Data
+                this.state.assets = await this.service.getAssets(tab);
+                this.state.filteredAssets = [...this.state.assets];
+                
+                // Select first
+                if (this.state.assets.length > 0) {
+                    this.selectAsset(this.state.assets[0]);
+                }
+                
+                this.filterList(); // Re-apply current search/sort
+            }
+
+            selectAsset(asset) {
+                this.state.activeAsset = asset;
+                this.ui.updateHeader(asset);
+                this.ui.updateChartData(asset.price);
+                
+                // Refresh list highlight without re-rendering everything (Optimization)
+                const items = document.querySelectorAll('.asset-item');
+                // Simple re-render for simplicity in this version
+                this.ui.renderList(this.state.filteredAssets, asset.id);
+            }
+
+            filterList() {
+                const query = document.getElementById('searchInput').value.toLowerCase();
+                const sort = document.getElementById('sortSelect').value;
+
+                // 1. Filter
+                let res = this.state.assets.filter(a => 
+                    a.symbol.toLowerCase().includes(query) || 
+                    a.name.toLowerCase().includes(query)
+                );
+
+                // 2. Sort
+                if (sort === 'rank') {
+                    // Default order (Market Cap for crypto)
+                } else if (sort === 'gainers') {
+                    res.sort((a, b) => b.change - a.change);
+                } else if (sort === 'loosers') {
+                    res.sort((a, b) => a.change - b.change);
+                } else if (sort === 'alpha') {
+                    res.sort((a, b) => a.symbol.localeCompare(b.symbol));
                 }
 
-                ui.chart.data.labels = labels;
-                ui.chart.data.datasets[0].data = prices;
-                ui.chart.update();
-                
-                // Send to worker for indicators
-                worker.postMessage(prices);
+                this.state.filteredAssets = res;
+                this.ui.renderList(res, this.state.activeAsset?.id);
             }
 
-            // ACTIONS
+            sortList() {
+                this.filterList();
+            }
             
-            changeTimeframe(tf) {
-                store.state.timeframe = tf;
-                
-                // Update Buttons UI
-                document.querySelectorAll('.btn-time').forEach(btn => {
-                    btn.classList.toggle('active', btn.innerText === tf);
-                });
-                
-                // Reload Data (Trigger spinner)
-                this.loadData();
-            }
-
-            placeOrder(type) {
-                const amount = parseFloat(document.getElementById('inputAmount').value);
-                if(!amount || amount <= 0) return alert("Montant invalide");
-                if(type === 'buy' && amount > store.state.balance) return alert("Solde insuffisant");
-
-                const newBalance = store.updateBalance(amount, type);
-                ui.updateBalanceDisplay();
-                
-                // Visual feedback
-                const btn = event.target;
-                const originalText = btn.innerText;
-                btn.innerText = "OK !";
-                setTimeout(() => btn.innerText = originalText, 1000);
-            }
-
             toggleTheme() {
-                const newTheme = store.state.theme === 'dark' ? 'light' : 'dark';
-                store.state.theme = newTheme;
-                store.save();
-                document.documentElement.setAttribute('data-theme', newTheme);
-                // Force update indicators color
-                this.loadData(); 
+                const html = document.documentElement;
+                const current = html.getAttribute('data-theme');
+                html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
             }
 
-            toggleSettings() {
-                const modal = document.getElementById('settingsModal');
-                modal.classList.toggle('open');
-            }
-
-            saveSettings() {
-                this.toggleSettings();
-            }
-            
-            setAlert() {
-                const val = document.getElementById('alertPriceInput').value;
-                if(val) alert(`Alerte définie sur $${val}`);
+            executeTrade() {
+                const btn = event.target;
+                const oldText = btn.innerText;
+                btn.innerText = "ORDRE PLACÉ !";
+                btn.classList.add('btn-success');
+                setTimeout(() => {
+                    btn.innerText = oldText;
+                    btn.classList.remove('btn-success');
+                }, 1500);
             }
 
             exportPDF() {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                doc.text("Rapport NovaTrade Pro", 10, 10);
-                doc.text(`Solde: $${store.state.balance}`, 10, 20);
-                doc.text(`Actif: ${store.state.activeAsset}`, 10, 30);
-                doc.save("rapport.pdf");
+                doc.text(`Rapport NovaTrade - ${this.state.tab.toUpperCase()}`, 10, 10);
+                doc.text(`Actif: ${this.state.activeAsset.symbol}`, 10, 20);
+                doc.text(`Prix: $${this.state.activeAsset.price}`, 10, 30);
+                doc.save("novatrade.pdf");
+            }
+            
+            // Fix for initial load without click event
+            setTimeframe(tf) {
+                // Just visual for demo
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    // Randomize chart slightly
+                    this.ui.updateChartData(this.state.activeAsset.price);
+                }, 500);
             }
         }
 
-        // Init App
+        // Init
         window.app = new App();
-
+        // Force initial active tab visual
+        document.querySelector('.tab-btn').classList.add('active');
     </script>
 </body>
 </html>
